@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baccarat X‑Ray Tracker App Layout</title>
+  <!-- PWA (install as app): manifest + theme color -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="X‑Ray Tracker">
+  <style>
+    /* Basic reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #121212;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+    /* Top display */
+    .display {
+      padding: 16px;
+      background: #222;
+      text-align: center;
+    }
+    .display .bankroll {
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: #76ff03;
+      letter-spacing: 2px;
+    }
+    .display .stats {
+      display: flex;
+      justify-content: space-around;
+      font-size: 0.75rem;
+      margin-top: 8px;
+    }
+    .stats div span {
+      display: block;
+    }
+    /* Section container */
+    .sections {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .section {
+      flex: 1;
+      display: none;
+      padding: 12px;
+      overflow-y: auto;
+    }
+    .section.active {
+      display: block;
+    }
+    /* Play section */
+    .play {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .play .panel {
+      flex: 0 0 auto;
+      margin-bottom: 16px;
+    }
+    .play .panel h4 {
+      margin-bottom: 6px;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .keypad button {
+      padding: 14px 0;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      background: #2a2a2a;
+      color: #fff;
+      cursor: pointer;
+    }
+    .keypad button.selected {
+      background: #1e88e5;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+    }
+    .controls button {
+      flex: 1;
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Next-round bet info under keypad */
+    .bet-info {
+      margin-top: 10px;
+      padding: 10px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .bet-info .small {
+      margin-top: 6px;
+      color: #cfd8dc;
+      font-size: 0.85rem;
+    }
+    .undo-btn {
+      background: #c62828;
+      color: #fff;
+    }
+    .clear-btn {
+      background: #37474f;
+      color: #fff;
+    }
+    /* Board section */
+    .board-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .board-grid .num {
+      width: 30%;
+      margin: 4px;
+      padding: 8px;
+      text-align: center;
+      border-radius: 4px;
+      font-size: 1rem;
+      position: relative;
+      min-height: 74px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .num .num-top {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .num .num-meta {
+      font-size: 0.78rem;
+      opacity: 0.95;
+    }
+    .num .bar {
+      height: 6px;
+      width: 100%;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+    .num .bar > div {
+      height: 100%;
+      width: 0;
+      background: rgba(255,255,255,0.55);
+    }
+    .num.inactive {
+      background: #455a64;
+      color: #b0bec5;
+    }
+    .num.active {
+      background: #1b5e20;
+      color: #c5e1a5;
+    }
+    .num.excluded {
+      background: #424242;
+      color: #9e9e9e;
+      text-decoration: line-through;
+    }
+    /* History section */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .history-table th, .history-table td {
+      padding: 6px 4px;
+      border-bottom: 1px solid #333;
+      text-align: center;
+    }
+    .history-table thead {
+      background: #263238;
+    }
+    .history-table tbody tr:nth-child(odd) {
+      background: #1e1e1e;
+    }
+    .history-table tbody tr:nth-child(even) {
+      background: #2a2a2a;
+    }
+    .save-results {
+      margin-top: 8px;
+      width: 100%;
+      padding: 8px;
+      background: #3949ab;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .import-results {
+      margin-top: 8px;
+      width: 100%;
+      padding: 8px;
+      background: #0277bd;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-top: 1px solid #333;
+    }
+    .tabs button {
+      flex: 1;
+      padding: 12px;
+      background: #1e1e1e;
+      color: #b0bec5;
+      border: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .tabs button.active {
+      background: #333;
+      color: #fff;
+    }
+    /* Alert message */
+    .alert {
+      padding: 10px;
+      margin: 10px 0;
+      background: #ffebee;
+      color: #c62828;
+      border-radius: 4px;
+      display: none;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="display">
+    <div class="bankroll" id="bankrollDisplay">0</div>
+    <div class="stats">
+      <div>P Step:<span id="pStepDisplay">1</span></div>
+      <div>P Active:<span id="pActiveDisplay">0</span></div>
+      <div>P Bet:<span id="pBetDisplay">0</span></div>
+      <div>B Step:<span id="bStepDisplay">1</span></div>
+      <div>B Active:<span id="bActiveDisplay">0</span></div>
+      <div>B Bet:<span id="bBetDisplay">0</span></div>
+    </div>
+  </div>
+  <div id="alertBox" class="alert"></div>
+  <div class="sections">
+    <!-- Play Section -->
+    <div id="playSection" class="section active play">
+      <div class="panel">
+        <h4>Player</h4>
+        <div class="keypad" id="playerPad"></div>
+      </div>
+      <div class="panel">
+        <h4>Banker</h4>
+        <div class="keypad" id="bankerPad"></div>
+      </div>
+
+      <div class="bet-info">
+        <div><strong>Next bet (Player):</strong> <span id="pBetInfo">–</span></div>
+        <div style="margin-top:6px;"><strong>Next bet (Banker):</strong> <span id="bBetInfo">–</span></div>
+        <div class="small"><strong>Total next bet (both sides):</strong> <span id="totalNextBet">0</span></div>
+      </div>
+
+      <div class="controls">
+        <button class="undo-btn" id="undoButton">UNDO LAST</button>
+        <button class="clear-btn" id="clearButton">CLEAR SHOE</button>
+      </div>
+    </div>
+    <!-- Board Section -->
+    <div id="boardSection" class="section">
+      <h3>Player Numbers</h3>
+      <div class="board-grid" id="playerBoard"></div>
+      <h3 style="margin-top:12px;">Banker Numbers</h3>
+      <div class="board-grid" id="bankerBoard"></div>
+    </div>
+    <!-- History Section -->
+    <div id="historySection" class="section">
+      <table class="history-table">
+        <thead>
+          <tr><th>#</th><th>Date</th><th>Time</th><th>Player</th><th>Banker</th><th>P Net</th><th>B Net</th><th>Total Net</th><th>Bankroll</th></tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <button class="save-results" id="saveButton">SAVE RESULTS</button>
+      <button class="import-results" id="importButton">IMPORT RESULTS</button>
+      <!-- Mobile browsers often block file pickers if input is display:none -->
+      <input type="file" id="importFile" accept=".csv,text/csv" style="position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0;" />
+    </div>
+    <!-- Settings Section -->
+    <div id="settingsSection" class="section">
+      <h3>Settings</h3>
+      <label>Start Bankroll:</label>
+      <input type="number" id="startBankrollInput" style="width:100%; padding:6px; margin-bottom:10px;" value="0">
+      <button id="applyBankroll" style="width:100%; padding:8px; background:#3949ab; color:#fff; border:none; border-radius:4px;">APPLY</button>
+    </div>
+
+    <!-- Analytics Section (PRO V3) -->
+    <div id="analyticsSection" class="section">
+      <h3>Analytics</h3>
+      <div style="margin-top:8px; font-size:0.9rem; color:#b0bec5;">Heatmap shows which totals appear most often in this shoe.</div>
+
+      <h4 style="margin-top:12px;">Player Heatmap</h4>
+      <div class="board-grid" id="playerHeat"></div>
+
+      <h4 style="margin-top:12px;">Banker Heatmap</h4>
+      <div class="board-grid" id="bankerHeat"></div>
+
+      <h4 style="margin-top:14px;">Stats</h4>
+      <div style="font-size:0.85rem; line-height:1.6;">
+        <div><strong>Hands:</strong> <span id="handsCount">0</span></div>
+        <div><strong>Player repeats (wins):</strong> <span id="pRepeatWins">0</span></div>
+        <div><strong>Banker repeats (wins):</strong> <span id="bRepeatWins">0</span></div>
+        <div style="margin-top:8px; color:#b0bec5;">Waiting hands = hands since the number last appeared.</div>
+      </div>
+
+      <table class="history-table" style="margin-top:10px;">
+        <thead>
+          <tr><th>Num</th><th>P Seen</th><th>P Wait</th><th>P Win</th><th>B Seen</th><th>B Wait</th><th>B Win</th></tr>
+        </thead>
+        <tbody id="analyticsBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="active" data-target="playSection">Play</button>
+    <button data-target="boardSection">Board</button>
+    <button data-target="historySection">History</button>
+    <button data-target="settingsSection">Settings</button>
+    <button data-target="analyticsSection">Analytics</button>
+  </div>
+  <script>
+    // Ladder array
+    const ladder = [
+      100,100,100,100,
+      200,200,200,200,
+      400,400,400,400,
+      800,800,800,800,
+      1600,1600,1600,1600,
+      3000,3000,3000,3000,3000
+    ];
+    // Create side state
+    function createSide() {
+      return {
+        status: {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0},
+        losses: {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0},
+        // Per-number ladder step (each number starts from Step 1 when it becomes active)
+        steps:  {1:1,2:1,3:1,4:1,5:1,6:1,7:1,8:1,9:1},
+        // Cumulative profit per number (for +500 tracking etc.)
+        profit: {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0},
+        // Analytics (PRO V3)
+        seen: {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0},
+        wins: {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0},
+        lastSeen: {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null},
+        totalProfit: 0
+      };
+    }
+    let playerState = createSide();
+    let bankerState = createSide();
+    let bankroll = 0;
+    let startBankroll = 0;
+    let history = [];
+    let seq = 0;
+    let targetReached = false;
+    let handIndex = 0;
+    let pSelect = null;
+    let bSelect = null;
+
+    // ------------------------
+    // Persist / Restore (Reload-safe)
+    // ------------------------
+    const STORAGE_KEY = 'baccarat_xray_app_state_v1';
+
+    function saveState() {
+      try {
+        const state = {
+          playerState,
+          bankerState,
+          bankroll,
+          startBankroll,
+          history,
+          seq,
+          handIndex,
+          targetReached,
+          startBankrollInput: document.getElementById('startBankrollInput')?.value ?? '0',
+          activeTab: document.querySelector('.tabs button.active')?.getAttribute('data-target') || 'playSection'
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const state = JSON.parse(raw);
+        if (!state || typeof state !== 'object') return false;
+
+        playerState = state.playerState || playerState;
+        bankerState = state.bankerState || bankerState;
+        bankroll = Number(state.bankroll) || 0;
+        startBankroll = Number(state.startBankroll) || 0;
+        history = Array.isArray(state.history) ? state.history : [];
+        seq = Number(state.seq) || 0;
+        handIndex = Number(state.handIndex) || 0;
+        targetReached = !!state.targetReached;
+
+        const sb = document.getElementById('startBankrollInput');
+        if (sb && state.startBankrollInput != null) sb.value = state.startBankrollInput;
+
+        const tabId = state.activeTab || 'playSection';
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+        const btn = document.querySelector(`.tabs button[data-target="${tabId}"]`);
+        if (btn) btn.classList.add('active');
+        const sec = document.getElementById(tabId);
+        if (sec) sec.classList.add('active');
+
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function clearSavedState() {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    }
+    // Helper to count active numbers
+    function countActive(side) {
+      return Object.values(side.status).filter(s => s === 1).length;
+    }
+    // Process one side
+    function handleSide(side, result) {
+      let roundNet = 0;
+
+      // Analytics: count appearances (ignore 0)
+      const wasActive = result > 0 && side.status[result] === 1;
+      if (result > 0) {
+        side.seen[result] = (side.seen[result] || 0) + 1;
+        side.lastSeen[result] = handIndex;
+      }
+
+      // 1) Place bets on each ACTIVE number at its own ladder step
+      for (const num in side.status) {
+        if (side.status[num] === 1) {
+          const stepIdx = Math.min(side.steps[num] - 1, ladder.length - 1);
+          const bet = ladder[stepIdx];
+          side.losses[num] += bet;
+          roundNet -= bet;
+        }
+      }
+
+      // 2) Check win
+      const isWin = result > 0 && side.status[result] === 1;
+      if (isWin) {
+        // Analytics: repeat win
+        if (wasActive) {
+          side.wins[result] = (side.wins[result] || 0) + 1;
+        }
+        const stepIdx = Math.min(side.steps[result] - 1, ladder.length - 1);
+        const bet = ladder[stepIdx];
+        roundNet += 9 * bet; // return includes stake
+        // Per-number profit for this winning number (9×bet - total losses on that number)
+        const perNumberNet = (9 * bet) - side.losses[result];
+        side.profit[result] = (side.profit[result] || 0) + perNumberNet;
+        // Exclude this number after one win
+        side.losses[result] = 0;
+        side.status[result] = 2;
+        side.steps[result] = 1;
+      }
+
+      // 3) Increase step for all ACTIVE numbers that did NOT win (zero counts as a loss)
+      for (const num in side.status) {
+        if (side.status[num] === 1) {
+          if (isWin && String(num) === String(result)) continue;
+          side.steps[num] = Math.min(side.steps[num] + 1, ladder.length);
+        }
+      }
+
+      // 4) Activate new number if it appears for the first time (1-9 only)
+      if (result > 0 && side.status[result] === 0) {
+        side.status[result] = 1;
+        side.steps[result] = 1;
+      }
+
+      side.totalProfit += roundNet;
+      return roundNet;
+    }
+    // Update top display
+    function updateDisplay() {
+      document.getElementById('bankrollDisplay').textContent = bankroll;
+
+      // Player stats (max step among active numbers)
+      const pActiveCount = countActive(playerState);
+      let pMaxStep = 1;
+      for (let i = 1; i <= 9; i++) {
+        if (playerState.status[i] === 1) {
+          pMaxStep = Math.max(pMaxStep, playerState.steps[i]);
+        }
+      }
+      const pMaxBet = pActiveCount > 0 ? ladder[Math.min(pMaxStep - 1, ladder.length - 1)] : 0;
+      document.getElementById('pStepDisplay').textContent = pMaxStep;
+      document.getElementById('pActiveDisplay').textContent = pActiveCount;
+      document.getElementById('pBetDisplay').textContent = pMaxBet;
+
+      // Banker stats (max step among active numbers)
+      const bActiveCount = countActive(bankerState);
+      let bMaxStep = 1;
+      for (let i = 1; i <= 9; i++) {
+        if (bankerState.status[i] === 1) {
+          bMaxStep = Math.max(bMaxStep, bankerState.steps[i]);
+        }
+      }
+      const bMaxBet = bActiveCount > 0 ? ladder[Math.min(bMaxStep - 1, ladder.length - 1)] : 0;
+      document.getElementById('bStepDisplay').textContent = bMaxStep;
+      document.getElementById('bActiveDisplay').textContent = bActiveCount;
+      document.getElementById('bBetDisplay').textContent = bMaxBet;
+      // update boards
+      const pBoard = document.getElementById('playerBoard');
+      const bBoard = document.getElementById('bankerBoard');
+      pBoard.innerHTML = '';
+      bBoard.innerHTML = '';
+      for (let i=1; i<=9; i++) {
+        const pDiv = document.createElement('div');
+        pDiv.className = 'num ' + (playerState.status[i] === 1 ? 'active' : playerState.status[i] === 2 ? 'excluded' : 'inactive');
+        {
+          const step = playerState.status[i] === 1 ? playerState.steps[i] : 0;
+          const bet = playerState.status[i] === 1 ? ladder[Math.min(step - 1, ladder.length - 1)] : 0;
+          const prof = playerState.profit?.[i] || 0;
+          const pct = playerState.status[i] === 1 ? Math.round((step / ladder.length) * 100) : 0;
+          const profTag = prof >= 500 ? `P:+${prof} ✅` : (prof !== 0 ? `P:${prof}` : '');
+          pDiv.innerHTML = `
+            <div class="num-top">${i}</div>
+            <div class="num-meta">${playerState.status[i] === 1 ? `S${step}/25 • Bet ${bet}` : (playerState.status[i] === 2 ? 'EXCLUDED' : 'INACTIVE')}</div>
+            <div class="num-meta">${profTag}</div>
+            <div class="bar"><div style="width:${pct}%"></div></div>
+          `;
+        }
+        pBoard.appendChild(pDiv);
+        const bDiv = document.createElement('div');
+        bDiv.className = 'num ' + (bankerState.status[i] === 1 ? 'active' : bankerState.status[i] === 2 ? 'excluded' : 'inactive');
+        {
+          const step = bankerState.status[i] === 1 ? bankerState.steps[i] : 0;
+          const bet = bankerState.status[i] === 1 ? ladder[Math.min(step - 1, ladder.length - 1)] : 0;
+          const prof = bankerState.profit?.[i] || 0;
+          const pct = bankerState.status[i] === 1 ? Math.round((step / ladder.length) * 100) : 0;
+          const profTag = prof >= 500 ? `P:+${prof} ✅` : (prof !== 0 ? `P:${prof}` : '');
+          bDiv.innerHTML = `
+            <div class="num-top">${i}</div>
+            <div class="num-meta">${bankerState.status[i] === 1 ? `S${step}/25 • Bet ${bet}` : (bankerState.status[i] === 2 ? 'EXCLUDED' : 'INACTIVE')}</div>
+            <div class="num-meta">${profTag}</div>
+            <div class="bar"><div style="width:${pct}%"></div></div>
+          `;
+        }
+        bBoard.appendChild(bDiv);
+      }
+
+      // Next round bet size per active number (grouped by bet value)
+      const pGroups = {};
+      for (let i = 1; i <= 9; i++) {
+        if (playerState.status[i] === 1) {
+          const betVal = ladder[Math.min(playerState.steps[i] - 1, ladder.length - 1)];
+          if (!pGroups[betVal]) pGroups[betVal] = [];
+          pGroups[betVal].push(`${i}(S${playerState.steps[i]})`);
+        }
+      }
+      const pKeys = Object.keys(pGroups).sort((a,b) => Number(b) - Number(a));
+      const pText = pKeys.length ? pKeys.map(b => `${b} on ${pGroups[b].join(', ')}`).join(' | ') : '–';
+      const pEl = document.getElementById('pBetInfo');
+      if (pEl) pEl.textContent = pText;
+
+      const bGroups = {};
+      for (let i = 1; i <= 9; i++) {
+        if (bankerState.status[i] === 1) {
+          const betVal = ladder[Math.min(bankerState.steps[i] - 1, ladder.length - 1)];
+          if (!bGroups[betVal]) bGroups[betVal] = [];
+          bGroups[betVal].push(`${i}(S${bankerState.steps[i]})`);
+        }
+      }
+      const bKeys = Object.keys(bGroups).sort((a,b) => Number(b) - Number(a));
+      const bText = bKeys.length ? bKeys.map(b => `${b} on ${bGroups[b].join(', ')}`).join(' | ') : '–';
+      const bEl = document.getElementById('bBetInfo');
+      if (bEl) bEl.textContent = bText;
+
+      // Total next-round bet (both sides, sum of all active bets)
+      let totalNext = 0;
+      for (let i = 1; i <= 9; i++) {
+        if (playerState.status[i] === 1) totalNext += ladder[Math.min(playerState.steps[i] - 1, ladder.length - 1)];
+        if (bankerState.status[i] === 1) totalNext += ladder[Math.min(bankerState.steps[i] - 1, ladder.length - 1)];
+      }
+      const tEl = document.getElementById('totalNextBet');
+      if (tEl) tEl.textContent = totalNext;
+
+      // Analytics visuals (PRO V3)
+      updateAnalytics();
+
+      // Save state after every update
+      saveState();
+    }
+
+    // ------------------------
+    // Analytics (PRO V3)
+    // ------------------------
+    function updateAnalytics() {
+      const pHeat = document.getElementById('playerHeat');
+      const bHeat = document.getElementById('bankerHeat');
+      const body = document.getElementById('analyticsBody');
+      const handsEl = document.getElementById('handsCount');
+      const pWinsEl = document.getElementById('pRepeatWins');
+      const bWinsEl = document.getElementById('bRepeatWins');
+      if (!pHeat || !bHeat || !body || !handsEl) return;
+
+      const pMaxSeen = Math.max(1, ...Object.values(playerState.seen));
+      const bMaxSeen = Math.max(1, ...Object.values(bankerState.seen));
+
+      handsEl.textContent = handIndex;
+      pWinsEl.textContent = Object.values(playerState.wins).reduce((a,b)=>a+b,0);
+      bWinsEl.textContent = Object.values(bankerState.wins).reduce((a,b)=>a+b,0);
+
+      pHeat.innerHTML = '';
+      bHeat.innerHTML = '';
+      body.innerHTML = '';
+
+      for (let i = 1; i <= 9; i++) {
+        const pSeen = playerState.seen[i] || 0;
+        const bSeen = bankerState.seen[i] || 0;
+        const pAlpha = Math.max(0.15, pSeen / pMaxSeen);
+        const bAlpha = Math.max(0.15, bSeen / bMaxSeen);
+
+        const pTile = document.createElement('div');
+        pTile.className = 'num inactive';
+        pTile.style.background = `rgba(0, 230, 118, ${pAlpha})`;
+        pTile.style.color = '#06140d';
+        pTile.style.fontWeight = 'bold';
+        pTile.textContent = `${i} (${pSeen})`;
+        pHeat.appendChild(pTile);
+
+        const bTile = document.createElement('div');
+        bTile.className = 'num inactive';
+        bTile.style.background = `rgba(255, 23, 68, ${bAlpha})`;
+        bTile.style.color = '#140608';
+        bTile.style.fontWeight = 'bold';
+        bTile.textContent = `${i} (${bSeen})`;
+        bHeat.appendChild(bTile);
+
+        const pLast = playerState.lastSeen[i];
+        const bLast = bankerState.lastSeen[i];
+        const pWait = (pLast === null) ? '-' : (handIndex - pLast);
+        const bWait = (bLast === null) ? '-' : (handIndex - bLast);
+        const pWin = playerState.wins[i] || 0;
+        const bWin = bankerState.wins[i] || 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i}</td><td>${pSeen}</td><td>${pWait}</td><td>${pWin}</td><td>${bSeen}</td><td>${bWait}</td><td>${bWin}</td>`;
+        body.appendChild(tr);
+      }
+    }
+    // Add hand
+    function addHand(pVal, bVal) {
+      // If startBankroll was never set, treat the current bankroll as start.
+      if (!startBankroll) startBankroll = bankroll;
+
+      // Increase hand index for analytics (PRO V3)
+      handIndex++;
+
+      const pNet = handleSide(playerState, parseInt(pVal));
+      const bNet = handleSide(bankerState, parseInt(bVal));
+      const totalNet = pNet + bNet;
+      bankroll += totalNet;
+      recordHistory(pVal, bVal, pNet, bNet, totalNet);
+
+      // Target = Start Bankroll + 12%
+      const target = startBankroll + (startBankroll * 0.12);
+      if (!targetReached && bankroll >= target) {
+        targetReached = true;
+        const alertBox = document.getElementById('alertBox');
+        alertBox.style.display = 'block';
+        alertBox.textContent = '✅ Target reached (+12%). You can continue entering results.';
+      }
+
+      updateDisplay();
+      updateAnalytics();
+    }
+    // Record history
+    function recordHistory(p, b, pNet, bNet, tNet) {
+      seq++;
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-CA');
+      const timeStr = now.toLocaleTimeString('en-GB', {hour12:false});
+      history.unshift({ seq: seq, date: dateStr, time: timeStr, p: p, b: b, pNet: pNet, bNet: bNet, total: tNet, br: bankroll });
+      refreshHistory();
+      saveState();
+    }
+    function refreshHistory() {
+      const tbody = document.getElementById('historyBody');
+      tbody.innerHTML = '';
+      history.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.seq}</td><td>${row.date}</td><td>${row.time}</td><td>${row.p}</td><td>${row.b}</td><td>${row.pNet}</td><td>${row.bNet}</td><td>${row.total}</td><td>${row.br}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    // Undo last
+    function undoLast() {
+      if (history.length === 0) return;
+      // remove latest
+      history.shift();
+      // reset states
+      playerState = createSide();
+      bankerState = createSide();
+      startBankroll = parseInt(document.getElementById('startBankrollInput').value) || 0;
+      bankroll = startBankroll;
+      seq = 0;
+      handIndex = 0;
+      targetReached = false;
+      const oldHist = [...history];
+      history = [];
+      oldHist.reverse().forEach(entry => {
+        addHand(entry.p, entry.b);
+      });
+      // remove duplicates
+      if (history.length > oldHist.length) {
+        history = history.slice(0, oldHist.length);
+      }
+      updateDisplay();
+      refreshHistory();
+      // Re-evaluate target message based on rebuilt bankroll
+      const target = startBankroll + (startBankroll * 0.12);
+      if (bankroll >= target) {
+        targetReached = true;
+        const alertBox = document.getElementById('alertBox');
+        alertBox.style.display='block';
+        alertBox.textContent = '✅ Target reached (+12%). You can continue entering results.';
+      } else {
+        document.getElementById('alertBox').style.display='none';
+      }
+      saveState();
+    }
+    // Clear shoe
+    function clearShoe() {
+      playerState = createSide();
+      bankerState = createSide();
+      startBankroll = parseInt(document.getElementById('startBankrollInput').value) || 0;
+      bankroll = startBankroll;
+      history = [];
+      seq = 0;
+      handIndex = 0;
+      targetReached = false;
+      pSelect = null;
+      bSelect = null;
+      // reset keypad selections
+      document.querySelectorAll('.keypad button').forEach(btn => btn.classList.remove('selected'));
+      updateDisplay();
+      refreshHistory();
+      document.getElementById('alertBox').style.display='none';
+      clearSavedState();
+      saveState();
+    }
+    // Save results
+    function saveResults() {
+      if (history.length === 0) return;
+      let csv = 'Seq,Date,Time,Player,Banker,PlayerNet,BankerNet,TotalNet,Bankroll\n';
+      history.slice().reverse().forEach(row => {
+        csv += `${row.seq},${row.date},${row.time},${row.p},${row.b},${row.pNet},${row.bNet},${row.total},${row.br}\n`;
+      });
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const d = new Date();
+      a.href = url;
+      a.download = `baccarat_history_${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}_${d.getHours()}${d.getMinutes()}${d.getSeconds()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+    }
+    // Initialize keypads
+    function initKeypads() {
+      const pPad = document.getElementById('playerPad');
+      const bPad = document.getElementById('bankerPad');
+      for (let i=0; i<=9; i++) {
+        const bp = document.createElement('button');
+        bp.textContent = i;
+        bp.addEventListener('click', () => {
+          pSelect = i;
+          pPad.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+          bp.classList.add('selected');
+          tryAddHand();
+        });
+        pPad.appendChild(bp);
+        const bb = document.createElement('button');
+        bb.textContent = i;
+        bb.addEventListener('click', () => {
+          bSelect = i;
+          bPad.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+          bb.classList.add('selected');
+          tryAddHand();
+        });
+        bPad.appendChild(bb);
+      }
+    }
+    // Try to add hand when both selected
+    function tryAddHand() {
+      if (pSelect !== null && bSelect !== null) {
+        addHand(pSelect, bSelect);
+        pSelect = null;
+        bSelect = null;
+        // clear selected class
+        document.querySelectorAll('.keypad button').forEach(btn => btn.classList.remove('selected'));
+      }
+    }
+    // Tab switching
+    document.querySelectorAll('.tabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tgt = btn.getAttribute('data-target');
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(tgt).classList.add('active');
+        saveState();
+      });
+    });
+    // Event listeners
+    document.getElementById('undoButton').addEventListener('click', undoLast);
+    document.getElementById('clearButton').addEventListener('click', clearShoe);
+    document.getElementById('saveButton').addEventListener('click', saveResults);
+    // Import results
+    document.getElementById('importButton').addEventListener('click', () => {
+      // Must be a direct user gesture for some browsers
+      document.getElementById('importFile').click();
+    });
+    document.getElementById('importFile').addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        importResultsFromCSV(e.target.result);
+        this.value = '';
+      };
+      reader.readAsText(file);
+    });
+    document.getElementById('applyBankroll').addEventListener('click', () => {
+      startBankroll = parseInt(document.getElementById('startBankrollInput').value) || 0;
+      bankroll = startBankroll;
+      handIndex = 0;
+      targetReached = false;
+      const alertBox = document.getElementById('alertBox');
+      alertBox.style.display = 'none';
+      alertBox.textContent = '';
+      updateDisplay();
+      saveState();
+    });
+    // Import CSV and replay hands to rebuild live bankroll/state
+    function importResultsFromCSV(text) {
+      // Reset
+      playerState = createSide();
+      bankerState = createSide();
+      startBankroll = parseInt(document.getElementById('startBankrollInput').value) || 0;
+      bankroll = startBankroll;
+      history = [];
+      seq = 0;
+      handIndex = 0;
+      targetReached = false;
+      const alertBox = document.getElementById('alertBox');
+      alertBox.style.display = 'none';
+      alertBox.textContent = '';
+
+      const lines = String(text || '').trim().split(/\r?\n/);
+      if (lines.length === 0) return;
+      let start = 0;
+      // Skip header row if present
+      if (lines[0].toLowerCase().includes('player') || lines[0].toLowerCase().includes('seq')) {
+        start = 1;
+      }
+      for (let i = start; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const parts = line.split(',');
+        // Expected format from SAVE: Seq,Date,Time,Player,Banker,...
+        if (parts.length < 5) continue;
+        const p = parseInt(parts[3], 10);
+        const b = parseInt(parts[4], 10);
+        if (Number.isNaN(p) || Number.isNaN(b)) continue;
+        addHand(p, b);
+      }
+      updateDisplay();
+      refreshHistory();
+      saveState();
+    }
+
+    // Initialize on load
+    initKeypads();
+    const restored = loadState();
+    refreshHistory();
+    updateDisplay();
+    // Restore alert message (if any)
+    if (restored) {
+      const alertBox = document.getElementById('alertBox');
+      const target = startBankroll + (startBankroll * 0.12);
+      if (targetReached || bankroll >= target) {
+        targetReached = true;
+        alertBox.style.display = 'block';
+        alertBox.textContent = '✅ Target reached (+12%). You can continue entering results.';
+      }
+    }
+
+    // PWA: register service worker (offline + installability)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
